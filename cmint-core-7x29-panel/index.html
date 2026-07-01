@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>CrowMint — Secure Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@800&f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body { min-height: 100vh; background: var(--soft); }
+    .admin-site-header { grid-template-columns: 1fr auto; }
+    .secure-label { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .admin-page-main { max-width: 1240px; padding-top: 44px; }
+    .admin-card { width: min(460px, 100%); margin: 5vh auto; padding: 32px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 22px 60px rgba(21,34,28,.1); animation: contentIn .35s ease both; }
+    .admin-card h1 { margin: 8px 0 7px; font-size: 30px; letter-spacing: -.8px; }
+    .dashboard-shell { padding: 32px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 18px 50px rgba(21,34,28,.08); animation: contentIn .35s ease both; }
+    .dashboard-header { display: flex; justify-content: space-between; align-items: start; gap: 20px; margin-bottom: 30px; }
+    .dashboard-header h1 { margin: 5px 0 3px; font-size: 31px; letter-spacing: -.8px; }
+    .dashboard-header p { margin: 0; color: var(--muted); font-size: 12px; }
+    .admin-grid { display: grid; grid-template-columns: 280px 1fr; gap: 28px; align-items: start; }
+    .admin-panel-section { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); }
+    .admin-panel-section h2 { margin: 0 0 14px; font-size: 17px; }
+    .admin-product-section { padding: 2px 0; }
+    .admin-product-section h2 { margin: 0 0 16px; font-size: 21px; }
+    .admin-category-list { margin-bottom: 14px; }
+    .admin-note { color: var(--muted); font-size: 10px; line-height: 1.55; margin: 2px 0 0; }
+    .success-message { margin: 14px 0 0; padding: 10px 12px; border-radius: 9px; background: var(--mint-pale); color: var(--mint-dark); font-size: 11px; }
+    .file-input { padding: 8px !important; font-size: 11px; }
+    .faq-builder { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
+    .faq-builder-header { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 12px; }
+    .faq-builder-header h3 { margin: 0; font-size: 15px; }
+    .faq-list { display: grid; gap: 10px; }
+    .faq-empty { margin: 0; color: var(--muted); font-size: 11px; }
+    .faq-editor-item { padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: #fff; display: grid; gap: 10px; }
+    .faq-editor-actions { display: flex; justify-content: flex-end; }
+    .danger-text-button { border: 0; padding: 2px 0; background: transparent; color: #a13f3f; font-size: 11px; font-weight: 600; }
+    .discount-manager { margin-top: 28px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .discount-manager h2 { margin: 0 0 5px; font-size: 19px; }
+    .discount-manager > p { margin: 0 0 16px; color: var(--muted); font-size: 11px; }
+    .discount-form-grid { display: grid; grid-template-columns: 1.1fr 1fr .7fr 1.3fr auto auto; gap: 10px; align-items: end; }
+    .discount-form-grid label { display: grid; gap: 6px; font-size: 11px; font-weight: 600; }
+    .discount-form-grid input, .discount-form-grid select { width: 100%; border: 1px solid #cbd4cf; border-radius: 9px; padding: 10px 11px; background: #fff; }
+    .toggle-label { display: flex !important; align-items: center; gap: 7px !important; min-height: 39px; white-space: nowrap; }
+    .toggle-label input { width: auto; }
+    .discount-list { display: grid; gap: 8px; margin-top: 16px; }
+    .discount-list-item { display: grid; grid-template-columns: 1fr auto auto; gap: 13px; align-items: center; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); }
+    .discount-list-item strong { font-size: 12px; }
+    .discount-list-item span { color: var(--muted); font-size: 10px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-card { padding: 17px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
+    .stat-card span { display: block; color: var(--muted); font-size: 10px; margin-bottom: 5px; }
+    .stat-card strong { font-family: var(--heading); font-size: 24px; }
+    .product-manager { margin-top: 28px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .product-manager-header { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 17px; }
+    .product-manager-header h2 { margin: 0 0 4px; font-size: 20px; }
+    .product-manager-header p { margin: 0; color: var(--muted); font-size: 11px; }
+    .product-tools { display: grid; grid-template-columns: minmax(190px, 1fr) 150px 130px; gap: 8px; }
+    .product-tools input, .product-tools select { border: 1px solid #cbd4cf; border-radius: 9px; padding: 9px 10px; background: #fff; font-size: 11px; }
+    .product-table { width: 100%; border-collapse: collapse; }
+    .product-table th { padding: 10px 8px; border-bottom: 1px solid var(--line); color: var(--muted); text-align: left; text-transform: uppercase; letter-spacing: .5px; font-size: 9px; }
+    .product-table td { padding: 12px 8px; border-bottom: 1px solid var(--line); font-size: 11px; vertical-align: middle; }
+    .product-table-image { width: 52px; height: 44px; border-radius: 8px; object-fit: cover; border: 1px solid var(--line); background: var(--soft); }
+    .product-title-cell { display: flex; align-items: center; gap: 10px; min-width: 190px; }
+    .product-title-cell strong { display: block; max-width: 220px; font-size: 11px; }
+    .status-badge { display: inline-flex; padding: 5px 8px; border-radius: 14px; font-size: 9px; font-weight: 700; text-transform: capitalize; }
+    .status-published { color: var(--mint-dark); background: var(--mint-pale); }
+    .status-draft { color: #805d11; background: #fff5d9; }
+    .status-hidden { color: #6b6f72; background: #ecefee; }
+    .product-actions { display: flex; flex-wrap: wrap; gap: 5px; min-width: 210px; }
+    .table-action { border: 1px solid var(--line); border-radius: 7px; padding: 5px 7px; background: #fff; color: var(--ink); font-size: 9px; font-weight: 600; }
+    .table-action:hover { border-color: #abb8b2; }
+    .table-action.danger { color: #9a3e3e; }
+    .product-list-empty { padding: 34px 10px; text-align: center; color: var(--muted); font-size: 12px; }
+    .orders-manager { margin-top: 28px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .orders-manager h2 { margin: 0 0 4px; font-size: 20px; }
+    .orders-manager > p { margin: 0 0 17px; color: var(--muted); font-size: 11px; }
+    .order-id { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 9px; }
+    .form-actions { display: flex; gap: 8px; }
+    .form-actions .primary-button { flex: 1; }
+    .edit-banner { margin: 0 0 14px; padding: 10px 12px; border-radius: 9px; background: var(--mint-pale); color: var(--mint-dark); font-size: 11px; }
+    @media (max-width: 760px) {
+      .admin-page-main { padding-top: 28px; }
+      .admin-grid { grid-template-columns: 1fr; }
+      .discount-form-grid { grid-template-columns: 1fr 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .product-manager-header { align-items: stretch; flex-direction: column; }
+      .product-tools { grid-template-columns: 1fr; }
+      .product-table-wrap { overflow-x: auto; }
+      .dashboard-shell, .admin-card { padding: 22px; }
+      .secure-label { display: none; }
+      .dashboard-header { align-items: stretch; flex-direction: column; }
+      .product-table { min-width: 760px; }
+      .orders-manager .product-table { min-width: 980px; }
+      .admin-form .form-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) { .stats-grid, .discount-form-grid { grid-template-columns: 1fr; } .admin-page-main { padding-inline: 12px; } }
+  </style>
+</head>
+<body>
+  <header class="site-header admin-site-header">
+    <a class="brand" href="../index.html" aria-label="Return to CrowMint marketplace">
+      <span class="brand-icon"><img src="../assets/crowmint-icon.png" alt=""></span>
+      <span>CrowMint</span>
+    </a>
+    <span class="secure-label">Secure administration</span>
+  </header>
+
+  <main class="admin-page-main">
+    <section class="admin-card" id="loginView">
+      <span class="eyebrow">Restricted area</span>
+      <h1>Admin sign in</h1>
+      <p class="modal-subtitle">Enter your administrator credentials to continue.</p>
+      <form id="loginForm" class="login-form">
+        <label>Email<input name="email" type="email" autocomplete="username" required placeholder="admin@example.com"></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required placeholder="Enter your password"></label>
+        <p class="form-error" id="loginError" role="alert" hidden></p>
+        <button class="primary-button wide" id="loginButton" type="submit">Sign in securely</button>
+      </form>
+      <p class="login-security-note">Authentication is handled securely by Supabase.</p>
+    </section>
+
+    <section class="dashboard-shell" id="dashboardView" hidden>
+      <div class="dashboard-header">
+        <div><span class="eyebrow">Store management</span><h1>Admin dashboard</h1><p id="sessionEmail"></p></div>
+        <button class="secondary-button" id="signOutButton" type="button">Sign out</button>
+      </div>
+
+      <div class="stats-grid" id="dashboardStats"></div>
+
+      <div class="admin-grid">
+        <section class="admin-panel-section">
+          <h2>Categories</h2>
+          <div class="admin-category-list" id="categoryList"></div>
+          <form id="categoryForm" class="admin-form">
+            <label>New category<input name="categoryName" required placeholder="e.g. Templates"></label>
+            <button class="secondary-button" type="submit">Add category</button>
+          </form>
+        </section>
+
+        <section class="admin-product-section">
+          <h2 id="productFormTitle">Publish a digital product</h2>
+          <p class="edit-banner" id="editBanner" hidden></p>
+          <form id="productForm" class="admin-form">
+            <label>Product name<input name="name" required placeholder="e.g. Brand Planner"></label>
+            <div class="form-row">
+              <label>Personal license price (₹)<input name="personalPrice" type="number" min="0" step="1" required placeholder="499"></label>
+              <label>Commercial license price (₹)<input name="commercialPrice" type="number" min="0" step="1" required placeholder="999"></label>
+            </div>
+            <label class="toggle-label"><input name="freeForFirstEnabled" type="checkbox"> Enable Free for First Customers</label>
+            <label>Number of free customers<input name="freeForFirstLimit" type="number" min="1" step="1" placeholder="10, 20, or 100" disabled></label>
+            <div class="form-row">
+              <label>Category<select name="category" id="categorySelect" required></select></label>
+              <label>Product status<select name="status" id="productStatusSelect"><option value="published">Published</option><option value="draft">Draft</option><option value="hidden">Hidden</option></select></label>
+            </div>
+            <label>Product image URL<input name="image" type="url" required placeholder="https://example.com/product-image.jpg"></label>
+            <label>Description<textarea name="description" rows="3" required placeholder="Describe the product and who it is for."></textarea></label>
+            <label>What’s included<textarea name="included" rows="2" required placeholder="e.g. 12 templates and a quick-start guide"></textarea></label>
+            <div class="form-row">
+              <label>File type<input name="fileType" required placeholder="PDF, ZIP, PRPROJ..."></label>
+              <label>File name<input name="fileName" required placeholder="product-download.zip"></label>
+            </div>
+            <div class="form-row">
+              <label>Version<input name="version" required placeholder="1.0 or 2023+"></label>
+              <label>License type<input value="Personal License + Commercial License" readonly></label>
+            </div>
+            <label>Support contact<input name="supportContact" required value="crowmintofficial@gmail.com" placeholder="Support email or handle"></label>
+            <label>Refund policy note<textarea name="refundPolicy" rows="2" required>No refunds after download. If the file does not work, CrowMint support will help resolve the issue.</textarea></label>
+            <label>Digital file <span class="optional">Required for new products</span><input class="file-input" name="digitalFile" type="file"></label>
+            <p class="admin-note" id="currentFilePath" hidden></p>
+            <label>Preview image URLs <span class="optional">Optional, one per line</span><textarea name="previewImages" rows="2" placeholder="https://example.com/preview-2.jpg"></textarea></label>
+            <section class="faq-builder" aria-labelledby="faqBuilderTitle">
+              <div class="faq-builder-header">
+                <h3 id="faqBuilderTitle">FAQ <span class="optional">Optional</span></h3>
+                <button class="secondary-button" id="addFaqButton" type="button">Add FAQ</button>
+              </div>
+              <div class="faq-list" id="faqList"><p class="faq-empty">No FAQ items added.</p></div>
+            </section>
+            <label class="toggle-label"><input name="allowDiscounts" type="checkbox" checked> Allow discount codes for this product</label>
+            <p class="admin-note">Product metadata is saved to Supabase.</p>
+            <div class="form-actions">
+              <button class="primary-button" id="productSubmitButton" type="submit">Publish Product</button>
+              <button class="secondary-button" id="cancelEditButton" type="button" hidden>Cancel edit</button>
+            </div>
+          </form>
+          <p class="success-message" id="successMessage" role="status" hidden></p>
+        </section>
+      </div>
+
+      <section class="product-manager" aria-labelledby="productManagerTitle">
+        <div class="product-manager-header">
+          <div><h2 id="productManagerTitle">Products</h2><p>Search, edit, duplicate, and control product visibility.</p></div>
+          <div class="product-tools">
+            <input id="productSearch" type="search" placeholder="Search products">
+            <select id="productCategoryFilter"><option value="all">All categories</option></select>
+            <select id="productStatusFilter"><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option><option value="hidden">Hidden</option></select>
+          </div>
+        </div>
+        <div class="product-table-wrap"><div id="productList"></div></div>
+      </section>
+
+      <section class="orders-manager" aria-labelledby="ordersManagerTitle">
+        <h2 id="ordersManagerTitle">Orders</h2>
+        <p>Verified purchases saved after successful payment.</p>
+        <div class="product-table-wrap"><div id="orderList"></div></div>
+      </section>
+
+      <section class="discount-manager" aria-labelledby="discountManagerTitle">
+        <h2 id="discountManagerTitle">Discount codes</h2>
+        <p>Create and manage checkout discounts. Codes are stored locally in this static version.</p>
+        <form id="discountForm" class="discount-form-grid">
+          <label>Code name<input name="code" required placeholder="LAUNCH50"></label>
+          <label>Discount type<select name="type"><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></label>
+          <label>Value<input name="value" type="number" min="0.01" step="0.01" required placeholder="50"></label>
+          <label>Apply to product<select name="productId" id="discountProductSelect" required></select></label>
+          <label class="toggle-label"><input name="active" type="checkbox" checked> Active</label>
+          <button class="primary-button" type="submit">Create code</button>
+        </form>
+        <div class="discount-list" id="discountList"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="../config.js"></script>
+  <script>
+    // Supabase admin authentication configuration
+    const SUPABASE_URL = "https://ysvqjklnrggkrenudpgk.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzdnFqa2xucmdna3JlbnVkcGdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MTg2NTksImV4cCI6MjA5NzE5NDY1OX0.p03r129-lD0smnOSH_6VPrrw4jE1Y87MjXyt5gl3KAg";
+    const ADMIN_EMAIL = "kandhamalaivasann@gmail.com";
+
+    let supabaseClient = null;
+    let currentUser = null;
+    let store = { products: [], categories: [], discounts: [], orders: [] };
+    let editingProductId = null;
+    const productFilters = { search: "", category: "all", status: "all" };
+    const PRODUCT_STATUSES = new Set(["published", "draft", "hidden"]);
+    function configured() {
+      return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && ADMIN_EMAIL) &&
+        !SUPABASE_URL.startsWith("YOUR_") &&
+        !SUPABASE_ANON_KEY.startsWith("YOUR_") &&
+        ADMIN_EMAIL !== "admin@yourdomain.com";
+    }
+    function approved(user) {
+      return Boolean(user?.email) && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    }
+    function requireAdmin(action = "manage products") {
+      if (!currentUser) {
+        showSuccess(`Please sign in as ${ADMIN_EMAIL} to ${action}.`);
+        return false;
+      }
+      if (!approved(currentUser)) {
+        showSuccess(`This account is not authorized to ${action}. Sign in as ${ADMIN_EMAIL}.`);
+        return false;
+      }
+      return true;
+    }
+    function adminError(error) {
+      const detail = error?.message || "Unknown Supabase error.";
+      if (/row-level security|permission denied|not authorized/i.test(detail)) {
+        return `Supabase denied this action. Confirm you are signed in as ${ADMIN_EMAIL} and run the latest CrowMint RLS SQL. Details: ${detail}`;
+      }
+      return detail;
+    }
+    function escapeHtml(value = "") {
+      return String(value).replace(/[&<>'"]/g, character => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" })[character]);
+    }
+    function showError(message) { const error = document.getElementById("loginError"); error.textContent = message; error.hidden = !message; }
+    function showSuccess(message) { const status = document.getElementById("successMessage"); status.textContent = message; status.hidden = false; }
+    function money(value) { return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value); }
+    function normalizeStatus(value, fallback = "published") {
+      const status = String(value || "").trim().toLowerCase();
+      return PRODUCT_STATUSES.has(status) ? status : fallback;
+    }
+    function productStatus(product) { return normalizeStatus(product.status); }
+
+    function loadSupabase() {
+      if (window.supabase?.createClient) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    async function getClient() {
+      await loadSupabase();
+      if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      return supabaseClient;
+    }
+
+    function mapProduct(row) {
+      return {
+        id: row.id,
+        createdAt: row.created_at,
+        name: row.name,
+        price: Number(row.personal_price),
+        personalPrice: Number(row.personal_price),
+        commercialPrice: Number(row.commercial_price),
+        isFree: Number(row.personal_price) === 0 && Number(row.commercial_price) === 0,
+        freeForFirstEnabled: Boolean(row.free_for_first_enabled),
+        freeForFirstLimit: Number(row.free_for_first_limit || 0),
+        freeForFirstClaimedCount: Number(row.free_for_first_claimed_count || 0),
+        category: row.category,
+        image: row.image_url,
+        previewImages: row.preview_images || [],
+        description: row.description || "",
+        included: row.included || "",
+        fileType: row.file_type || "",
+        fileName: row.file_name || "",
+        filePath: row.file_path || "",
+        version: row.version || "",
+        supportContact: row.support_contact || "",
+        refundPolicy: row.refund_policy || "",
+        faqs: row.faqs || [],
+        status: normalizeStatus(row.status),
+        allowDiscounts: row.allow_discounts !== false
+      };
+    }
+
+    function toProductRow(product) {
+      return {
+        name: product.name,
+        personal_price: product.personalPrice,
+        commercial_price: product.commercialPrice,
+        is_free: Number(product.personalPrice) === 0 && Number(product.commercialPrice) === 0,
+        price: product.personalPrice,
+        free_for_first_enabled: product.freeForFirstEnabled,
+        free_for_first_limit: product.freeForFirstEnabled ? product.freeForFirstLimit : null,
+        category: product.category,
+        image_url: product.image,
+        preview_images: product.previewImages,
+        description: product.description,
+        included: product.included,
+        file_type: product.fileType,
+        file_name: product.fileName,
+        file_path: product.filePath || null,
+        version: product.version,
+        support_contact: product.supportContact,
+        refund_policy: product.refundPolicy,
+        faqs: product.faqs,
+        status: normalizeStatus(product.status),
+        allow_discounts: product.allowDiscounts
+      };
+    }
+
+    async function refreshCatalogData() {
+      const client = await getClient();
+      const [productResult, categoryResult] = await Promise.all([
+        client.from("products").select("*").order("created_at", { ascending: false }),
+        client.from("categories").select("name").order("name")
+      ]);
+      if (productResult.error) throw productResult.error;
+      if (categoryResult.error) throw categoryResult.error;
+      store.products = (productResult.data || []).map(mapProduct);
+      store.categories = (categoryResult.data || []).map(row => row.name);
+      renderCategories();
+      renderDiscounts();
+      renderProductList();
+    }
+
+    async function uploadProductFile(client, file) {
+      const originalName = file.name.replace(/[\\/]+/g, "-").trim() || "download-file";
+      const path = `products/${crypto.randomUUID()}/${originalName}`;
+      const { error } = await client.storage.from("product-files").upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
+      if (error) throw error;
+      return path;
+    }
+
+    function renderOrders(message = "") {
+      const list = document.getElementById("orderList");
+      if (message) { list.innerHTML = `<div class="product-list-empty">${escapeHtml(message)}</div>`; return; }
+      list.innerHTML = store.orders.length ? `<table class="product-table">
+        <thead><tr><th>Order ID</th><th>Customer Name</th><th>Customer Email</th><th>Product Purchased</th><th>License Type</th><th>Amount Paid</th><th>Purchase Date</th><th>Payment Status</th></tr></thead>
+        <tbody>${store.orders.map(order => `<tr>
+          <td><span class="order-id">${escapeHtml(order.order_id)}</span></td>
+          <td>${escapeHtml(order.customer_name)}</td>
+          <td>${escapeHtml(order.customer_email)}</td>
+          <td>${escapeHtml(order.product_name)}</td>
+          <td>${escapeHtml(order.license_type === "commercial" ? "Commercial License" : "Personal License")}</td>
+          <td>${money(order.amount_paid)}</td>
+          <td>${new Date(order.purchase_date).toLocaleString("en-IN")}</td>
+          <td><span class="status-badge status-${order.payment_status === "paid" ? "published" : "draft"}">${escapeHtml(order.payment_status)}</span></td>
+        </tr>`).join("")}</tbody></table>` : `<div class="product-list-empty">No verified orders yet.</div>`;
+    }
+
+    async function refreshOrders() {
+      try {
+        const client = await getClient();
+        const { data, error } = await client.from("orders").select("order_id,customer_name,customer_email,product_id,product_name,license_type,amount_paid,purchase_date,payment_status").order("purchase_date", { ascending: false });
+        if (error) throw error;
+        store.orders = data || [];
+        renderOrders();
+      } catch (error) {
+        renderOrders(`Unable to load orders: ${error.message}`);
+      }
+    }
+
+    function renderCategories() {
+      const list = document.getElementById("categoryList");
+      const select = document.getElementById("categorySelect");
+      const filter = document.getElementById("productCategoryFilter");
+      const selectedCategory = select.value;
+      list.innerHTML = store.categories.length ? store.categories.map(category => `<span class="admin-category-chip">${escapeHtml(category)}<button type="button" data-remove-category="${escapeHtml(category)}" aria-label="Remove ${escapeHtml(category)}">×</button></span>`).join("") : `<span class="category-empty">No categories added yet.</span>`;
+      select.innerHTML = store.categories.length ? `<option value="">Select a category</option>${store.categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("")}` : `<option value="">Add a category first</option>`;
+      if (store.categories.includes(selectedCategory)) select.value = selectedCategory;
+      filter.innerHTML = `<option value="all">All categories</option>${store.categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("")}`;
+      if (!store.categories.includes(productFilters.category)) productFilters.category = "all";
+      filter.value = productFilters.category;
+    }
+
+    function renderDiscounts() {
+      const list = document.getElementById("discountList");
+      const productSelect = document.getElementById("discountProductSelect");
+      productSelect.innerHTML = `<option value="">Select a product</option>${store.products.map(product => `<option value="${escapeHtml(product.id)}">${escapeHtml(product.name)}</option>`).join("")}`;
+      list.innerHTML = store.discounts.length ? store.discounts.map(discount => `
+        <div class="discount-list-item">
+          <div><strong>${escapeHtml(discount.code)}</strong><br><span>${discount.type === "percentage" ? `${discount.value}% off` : `₹${discount.value} off`} · ${escapeHtml(store.products.find(product => String(product.id) === String(discount.productId))?.name || "Unknown product")}</span></div>
+          <label class="toggle-label"><input type="checkbox" data-toggle-discount="${escapeHtml(discount.id)}" ${discount.active ? "checked" : ""}> Active</label>
+          <button class="danger-text-button" type="button" data-remove-discount="${escapeHtml(discount.id)}">Remove</button>
+        </div>`).join("") : `<span class="category-empty">No discount codes created yet.</span>`;
+    }
+
+    function addFaqEditor(faq = {}) {
+      const list = document.getElementById("faqList");
+      list.querySelector(".faq-empty")?.remove();
+      const item = document.createElement("div");
+      item.className = "faq-editor-item";
+      item.innerHTML = `
+        <label>Question<input class="faq-question" required placeholder="e.g. Is installation support available?"></label>
+        <label>Answer<textarea class="faq-answer-input" rows="2" required placeholder="Write a clear answer."></textarea></label>
+        <div class="faq-editor-actions"><button class="danger-text-button" type="button" data-remove-faq>Remove FAQ</button></div>`;
+      item.querySelector(".faq-question").value = faq.question || "";
+      item.querySelector(".faq-answer-input").value = faq.answer || "";
+      list.appendChild(item);
+    }
+
+    function resetFaqEditors() {
+      document.getElementById("faqList").innerHTML = `<p class="faq-empty">No FAQ items added.</p>`;
+    }
+
+    function renderStats() {
+      const published = store.products.filter(product => productStatus(product) === "published").length;
+      const drafts = store.products.filter(product => productStatus(product) === "draft").length;
+      document.getElementById("dashboardStats").innerHTML = `
+        <div class="stat-card"><span>Total products</span><strong>${store.products.length}</strong></div>
+        <div class="stat-card"><span>Published</span><strong>${published}</strong></div>
+        <div class="stat-card"><span>Drafts</span><strong>${drafts}</strong></div>
+        <div class="stat-card"><span>Categories</span><strong>${store.categories.length}</strong></div>`;
+    }
+
+    function renderProductList() {
+      const query = productFilters.search.toLowerCase();
+      const matches = store.products.filter(product => {
+        return product.name.toLowerCase().includes(query) &&
+          (productFilters.category === "all" || product.category === productFilters.category) &&
+          (productFilters.status === "all" || productStatus(product) === productFilters.status);
+      }).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      document.getElementById("productList").innerHTML = matches.length ? `<table class="product-table">
+        <thead><tr><th>Product</th><th>Price</th><th>Category</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody>${matches.map(product => {
+          const status = productStatus(product);
+          const created = new Date(product.createdAt || Number(product.id));
+          return `<tr>
+            <td><div class="product-title-cell"><img class="product-table-image" src="${escapeHtml(product.image)}" alt=""><strong>${escapeHtml(product.name)}</strong></div></td>
+            <td>${money(product.personalPrice ?? product.price)}<br><span>${money(product.commercialPrice ?? product.price)}</span></td><td>${escapeHtml(product.category)}</td>
+            <td><span class="status-badge status-${status}">${status}</span>${product.filePath ? "" : '<br><span class="category-empty">Upload a file before publishing.</span>'}</td>
+            <td>${Number.isNaN(created.getTime()) ? "—" : created.toLocaleDateString("en-IN")}</td>
+            <td><div class="product-actions">
+              <button class="table-action" type="button" data-edit-product="${escapeHtml(product.id)}">Edit</button>
+              <button class="table-action" type="button" data-duplicate-product="${escapeHtml(product.id)}">Duplicate</button>
+              <button class="table-action" type="button" data-toggle-product="${escapeHtml(product.id)}">${status === "published" ? "Unpublish" : "Publish"}</button>
+              <button class="table-action danger" type="button" data-delete-product="${escapeHtml(product.id)}">Delete</button>
+            </div></td>
+          </tr>`;
+        }).join("")}</tbody></table>` : `<div class="product-list-empty">No products match these filters.</div>`;
+      renderStats();
+    }
+
+    function updateProductSubmitLabel() {
+      const button = document.getElementById("productSubmitButton");
+      if (editingProductId) { button.textContent = "Save changes"; return; }
+      const status = normalizeStatus(document.getElementById("productStatusSelect").value);
+      button.textContent = status === "published" ? "Publish Product" : status === "draft" ? "Save as Draft" : "Save as Hidden";
+    }
+
+    function syncFreeForFirstFields() {
+      const form = document.getElementById("productForm");
+      const enabled = form.elements.freeForFirstEnabled.checked;
+      form.elements.freeForFirstLimit.disabled = !enabled;
+      form.elements.freeForFirstLimit.required = enabled;
+      form.elements.freeForFirstLimit.setAttribute("aria-disabled", String(!enabled));
+    }
+
+    function resetProductForm() {
+      editingProductId = null;
+      const form = document.getElementById("productForm");
+      form.reset();
+      form.elements.status.value = "published";
+      form.elements.allowDiscounts.checked = true;
+      form.elements.freeForFirstEnabled.checked = false;
+      form.elements.freeForFirstLimit.value = "";
+      syncFreeForFirstFields();
+      document.getElementById("productFormTitle").textContent = "Publish a digital product";
+      updateProductSubmitLabel();
+      document.getElementById("cancelEditButton").hidden = true;
+      document.getElementById("editBanner").hidden = true;
+      document.getElementById("currentFilePath").hidden = true;
+      document.getElementById("currentFilePath").textContent = "";
+      resetFaqEditors();
+    }
+
+    function beginProductEdit(product) {
+      editingProductId = String(product.id);
+      const form = document.getElementById("productForm");
+      form.elements.name.value = product.name || "";
+      form.elements.personalPrice.value = product.personalPrice ?? product.price ?? "";
+      form.elements.commercialPrice.value = product.commercialPrice ?? product.price ?? "";
+      form.elements.category.value = product.category || "";
+      form.elements.status.value = productStatus(product);
+      form.elements.image.value = product.image || "";
+      form.elements.description.value = product.description || "";
+      form.elements.included.value = product.included || "";
+      form.elements.fileType.value = product.fileType || "";
+      form.elements.fileName.value = product.fileName || "";
+      form.elements.version.value = product.version || "";
+      form.elements.supportContact.value = product.supportContact || "crowmintofficial@gmail.com";
+      form.elements.refundPolicy.value = product.refundPolicy || "No refunds after download. If the file does not work, CrowMint support will help resolve the issue.";
+      form.elements.previewImages.value = (product.previewImages || []).join("\n");
+      form.elements.allowDiscounts.checked = product.allowDiscounts !== false;
+      form.elements.freeForFirstEnabled.checked = product.freeForFirstEnabled === true;
+      form.elements.freeForFirstLimit.value = product.freeForFirstLimit || "";
+      syncFreeForFirstFields();
+      resetFaqEditors();
+      (product.faqs || []).forEach(addFaqEditor);
+      document.getElementById("productFormTitle").textContent = "Edit product";
+      updateProductSubmitLabel();
+      document.getElementById("cancelEditButton").hidden = false;
+      const banner = document.getElementById("editBanner");
+      banner.textContent = product.filePath
+        ? `Editing ${product.name}. Current file is shown below. Choose a new file only if you want to replace it.`
+        : `Editing ${product.name}. Upload a file before publishing.`;
+      banner.hidden = false;
+      const currentFile = document.getElementById("currentFilePath");
+      currentFile.textContent = product.filePath
+        ? `Current uploaded file: ${product.fileName || "Unnamed file"} · ${product.filePath}`
+        : "Upload a file before publishing.";
+      currentFile.hidden = false;
+      document.getElementById("productFormTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function showDashboard(user) {
+      currentUser = user;
+      document.getElementById("loginView").hidden = true;
+      document.getElementById("dashboardView").hidden = false;
+      document.getElementById("sessionEmail").textContent = `Signed in as ${user.email}`;
+      try {
+        await refreshCatalogData();
+        await refreshOrders();
+      } catch (error) {
+        showSuccess(`Unable to load Supabase catalog: ${error.message}`);
+      }
+    }
+
+    async function restoreSession() {
+      if (!configured()) return;
+      try {
+        const client = await getClient();
+        const { data } = await client.auth.getSession();
+        if (approved(data.session?.user)) await showDashboard(data.session.user);
+        else if (data.session) await client.auth.signOut();
+      } catch { showError("Unable to connect to Supabase authentication."); }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      showError("");
+      if (!configured()) { showError("Add your Supabase URL, anon key, and admin email in admin/index.html."); return; }
+      const data = new FormData(event.currentTarget);
+      const email = data.get("email").trim();
+      if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) { showError("This email is not authorized to manage CrowMint."); return; }
+      const button = document.getElementById("loginButton");
+      button.disabled = true;
+      button.textContent = "Signing in…";
+      try {
+        const client = await getClient();
+        const { data: authData, error } = await client.auth.signInWithPassword({ email, password: data.get("password") });
+        if (error) throw error;
+        if (!approved(authData.user)) { await client.auth.signOut(); throw new Error("This account is not authorized."); }
+        await showDashboard(authData.user);
+        event.currentTarget.reset();
+      } catch (error) { showError(error.message || "Unable to sign in."); }
+      finally { button.disabled = false; button.textContent = "Sign in securely"; }
+    });
+
+    document.getElementById("signOutButton").addEventListener("click", async () => {
+      await supabaseClient?.auth.signOut();
+      currentUser = null;
+      document.getElementById("dashboardView").hidden = true;
+      document.getElementById("loginView").hidden = false;
+    });
+
+    document.getElementById("categoryForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!requireAdmin("create categories")) return;
+      const input = event.currentTarget.elements.categoryName;
+      const category = input.value.trim();
+      if (store.categories.some(item => item.toLowerCase() === category.toLowerCase())) { showSuccess("That category already exists."); return; }
+      try {
+        const client = await getClient();
+        const { error } = await client.from("categories").insert({ name: category }).select("name").single();
+        if (error) throw error;
+        input.value = "";
+        await refreshCatalogData();
+        showSuccess(`${category} category created.`);
+      } catch (error) { showSuccess(`Unable to create category: ${adminError(error)}`); }
+    });
+
+    document.getElementById("categoryList").addEventListener("click", async event => {
+      const remove = event.target.closest("[data-remove-category]");
+      if (!remove) return;
+      if (!requireAdmin("delete categories")) return;
+      const category = remove.dataset.removeCategory;
+      if (store.products.some(product => product.category === category)) { showSuccess("Remove products in this category before deleting it."); return; }
+      try {
+        const client = await getClient();
+        const { error } = await client.from("categories").delete().eq("name", category).select("name").single();
+        if (error) throw error;
+        await refreshCatalogData();
+        showSuccess(`${category} category deleted.`);
+      } catch (error) { showSuccess(`Unable to delete category: ${adminError(error)}`); }
+    });
+
+    document.getElementById("addFaqButton").addEventListener("click", addFaqEditor);
+    document.getElementById("faqList").addEventListener("click", event => {
+      const remove = event.target.closest("[data-remove-faq]");
+      if (!remove) return;
+      remove.closest(".faq-editor-item").remove();
+      if (!document.querySelector(".faq-editor-item")) resetFaqEditors();
+    });
+
+    document.getElementById("discountForm").addEventListener("submit", event => {
+      event.preventDefault();
+      if (!approved(currentUser)) return;
+      const data = new FormData(event.currentTarget);
+      const code = data.get("code").trim().toUpperCase();
+      const type = data.get("type");
+      const value = Number(data.get("value"));
+      if (type === "percentage" && value > 100) { showSuccess("Percentage discounts cannot exceed 100%."); return; }
+      if (store.discounts.some(item => item.code.toUpperCase() === code)) { showSuccess("That discount code already exists."); return; }
+
+      store.discounts.push({ id: String(Date.now()), code, type, value, productId: data.get("productId"), active: data.get("active") === "on" });
+      event.currentTarget.reset();
+      event.currentTarget.elements.active.checked = true;
+      renderDiscounts();
+      showSuccess(`${code} discount code created.`);
+    });
+
+    document.getElementById("discountList").addEventListener("change", event => {
+      const toggle = event.target.closest("[data-toggle-discount]");
+      if (!toggle || !approved(currentUser)) return;
+      const discount = store.discounts.find(item => item.id === toggle.dataset.toggleDiscount);
+      if (discount) discount.active = toggle.checked;
+    });
+
+    document.getElementById("discountList").addEventListener("click", event => {
+      const remove = event.target.closest("[data-remove-discount]");
+      if (!remove || !approved(currentUser)) return;
+      store.discounts = store.discounts.filter(item => item.id !== remove.dataset.removeDiscount);
+      renderDiscounts();
+    });
+
+    document.getElementById("productSearch").addEventListener("input", event => { productFilters.search = event.target.value.trim(); renderProductList(); });
+    document.getElementById("productCategoryFilter").addEventListener("change", event => { productFilters.category = event.target.value; renderProductList(); });
+    document.getElementById("productStatusFilter").addEventListener("change", event => { productFilters.status = event.target.value; renderProductList(); });
+    document.getElementById("productStatusSelect").addEventListener("change", updateProductSubmitLabel);
+    document.getElementById("productForm").elements.freeForFirstEnabled.addEventListener("change", syncFreeForFirstFields);
+    document.getElementById("cancelEditButton").addEventListener("click", resetProductForm);
+
+    document.getElementById("productList").addEventListener("click", async event => {
+      const edit = event.target.closest("[data-edit-product]");
+      const duplicate = event.target.closest("[data-duplicate-product]");
+      const toggle = event.target.closest("[data-toggle-product]");
+      const remove = event.target.closest("[data-delete-product]");
+      if (!(edit || duplicate || toggle || remove)) return;
+      if (!requireAdmin("manage products")) return;
+
+      if (edit) {
+        const product = store.products.find(item => String(item.id) === edit.dataset.editProduct);
+        if (product) beginProductEdit(product);
+      }
+      if (duplicate) {
+        const source = store.products.find(item => String(item.id) === duplicate.dataset.duplicateProduct);
+        if (!source) return;
+        const copy = { ...source, name: `${source.name} (Copy)`, status: "draft", filePath: "" };
+        try {
+          const client = await getClient();
+          const { error } = await client.from("products").insert(toProductRow(copy)).select("id").single();
+          if (error) throw error;
+          await refreshCatalogData();
+          showSuccess(`${copy.name} created as a draft.`);
+        } catch (error) { showSuccess(`Unable to duplicate product: ${adminError(error)}`); }
+      }
+      if (toggle) {
+        const product = store.products.find(item => String(item.id) === toggle.dataset.toggleProduct);
+        if (!product) return;
+        const status = productStatus(product) === "published" ? "draft" : "published";
+        if (status === "published" && !product.filePath) {
+          showSuccess("Upload a file before publishing.");
+          return;
+        }
+        try {
+          const client = await getClient();
+          const { error } = await client.from("products").update({ status }).eq("id", product.id).select("id").single();
+          if (error) throw error;
+          await refreshCatalogData();
+          showSuccess(`${product.name} is now ${status}.`);
+        } catch (error) { showSuccess(`Unable to update product status: ${adminError(error)}`); }
+      }
+      if (remove) {
+        const product = store.products.find(item => String(item.id) === remove.dataset.deleteProduct);
+        if (!product || !window.confirm(`Delete “${product.name}”? This cannot be undone.`)) return;
+        try {
+          const client = await getClient();
+          const { error } = await client.from("products").delete().eq("id", product.id).select("id").single();
+          if (error) throw error;
+          if (product.filePath) {
+            const { error: storageError } = await client.storage.from("product-files").remove([product.filePath]);
+            if (storageError) showSuccess(`Product deleted, but its stored file could not be removed: ${storageError.message}`);
+          }
+          if (editingProductId === String(product.id)) resetProductForm();
+          await refreshCatalogData();
+          showSuccess(`${product.name} was deleted.`);
+        } catch (error) { showSuccess(`Unable to delete product: ${adminError(error)}`); }
+      }
+    });
+
+    document.getElementById("productForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!requireAdmin(editingProductId ? "edit products" : "publish products")) return;
+      const data = new FormData(event.currentTarget);
+      const file = data.get("digitalFile");
+      const existing = editingProductId ? store.products.find(item => String(item.id) === editingProductId) : null;
+      const previewImages = data.get("previewImages").split(/[\n,]+/).map(url => url.trim()).filter(Boolean);
+      const faqs = [...document.querySelectorAll(".faq-editor-item")].map(item => ({
+        question: item.querySelector(".faq-question").value.trim(),
+        answer: item.querySelector(".faq-answer-input").value.trim()
+      })).filter(item => item.question && item.answer);
+      const productData = {
+        name: data.get("name").trim(),
+        price: Number(data.get("personalPrice")),
+        personalPrice: Number(data.get("personalPrice")),
+        commercialPrice: Number(data.get("commercialPrice")),
+        category: data.get("category"), image: data.get("image").trim(), description: data.get("description").trim(),
+        included: data.get("included").trim(), previewImages, faqs, status: normalizeStatus(data.get("status")),
+        fileType: data.get("fileType").trim(), fileName: data.get("fileName").trim(), version: data.get("version").trim(),
+        licenseTypes: ["personal", "commercial"], supportContact: data.get("supportContact").trim(),
+        refundPolicy: data.get("refundPolicy").trim(), allowDiscounts: data.get("allowDiscounts") === "on",
+        freeForFirstEnabled: data.get("freeForFirstEnabled") === "on",
+        freeForFirstLimit: Number(data.get("freeForFirstLimit") || 0),
+        filePath: existing?.filePath || ""
+      };
+
+      const name = data.get("name").trim();
+      const wasEditing = Boolean(existing);
+      const submitButton = document.getElementById("productSubmitButton");
+      submitButton.disabled = true;
+      submitButton.textContent = wasEditing ? "Saving changes…" : "Publishing…";
+      try {
+        const client = await getClient();
+        if (productData.freeForFirstEnabled && productData.freeForFirstLimit < 1) throw new Error("Enter the number of free customers.");
+        if (productData.status === "published" && !productData.filePath && !file?.name) {
+          throw new Error("Upload a file before publishing.");
+        }
+        if (file?.name) {
+          productData.fileName = file.name;
+          productData.filePath = await uploadProductFile(client, file);
+        }
+        const row = toProductRow(productData);
+        if (existing && !file?.name) {
+          delete row.file_path;
+          delete row.file_name;
+        }
+        let savedId;
+        if (existing) {
+          const { data: updated, error } = await client.from("products").update(row).eq("id", existing.id).select("id").single();
+          if (error) throw error;
+          savedId = updated.id;
+        } else {
+          const { data: inserted, error } = await client.from("products").insert(row).select("id").single();
+          if (error) throw error;
+          savedId = inserted.id;
+        }
+        const { data: verified, error: verifyError } = await client.from("products").select("id,file_path").eq("id", savedId).single();
+        const verifiedFilePath = verified?.file_path || "";
+        if (verifyError || !verified || verifiedFilePath !== productData.filePath) {
+          throw verifyError || new Error("The permanent product file path was not saved with the product.");
+        }
+        if (existing && file?.name && existing.filePath && existing.filePath !== productData.filePath) {
+          await client.storage.from("product-files").remove([existing.filePath]);
+        }
+        await refreshCatalogData();
+        resetProductForm();
+        const savedStatus = normalizeStatus(productData.status);
+        showSuccess(`${name} was ${wasEditing ? "updated" : savedStatus === "published" ? "published" : `saved as ${savedStatus}`} in Supabase.`);
+      } catch (error) {
+        showSuccess(`Unable to ${wasEditing ? "update" : "publish"} product: ${adminError(error)}`);
+      } finally {
+        submitButton.disabled = false;
+        updateProductSubmitLabel();
+      }
+    });
+
+    syncFreeForFirstFields();
+    restoreSession();
+  </script>
+</body>
+</html>

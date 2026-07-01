@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CrowMint digital products marketplace">
+  <title>CrowMint — Digital products, ready to download</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@800&f[]=general-sans@500,600,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="CrowMint home">
+      <span class="brand-icon"><img src="assets/crowmint-icon.png" alt=""></span>
+      <span>CrowMint</span>
+    </a>
+
+    <label class="search-box">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+      <input id="searchInput" type="search" placeholder="Search templates, PDFs, assets..." autocomplete="off">
+    </label>
+
+    <nav class="header-actions" aria-label="Main navigation">
+      <button class="header-link" id="categoriesButton" type="button">Categories</button>
+      <div class="account-menu-wrap">
+        <button class="account-button" id="accountToggle" type="button" aria-label="Account menu"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg><span>Login / Signup</span></button>
+        <div class="account-menu" id="accountMenu" hidden></div>
+      </div>
+      <button class="cart-button" id="cartButton" type="button" aria-label="Open cart">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2 12h10l2-8H6m3 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
+        <span class="cart-label">Cart</span><span class="cart-count" id="cartCount">0</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <div id="marketplaceView">
+      <section class="intro" aria-labelledby="pageTitle">
+        <h1 id="pageTitle">Digital products, ready to download.</h1>
+        <p>Templates, PDFs, printables, and creator assets in one place.</p>
+      </section>
+
+      <section class="marketplace" aria-labelledby="productsTitle">
+        <div class="category-tabs" id="categoryTabs" aria-label="Product categories"></div>
+        <div class="products-heading">
+          <div>
+            <h2 id="productsTitle">Explore digital products</h2>
+            <p id="resultsText">Products from independent creators</p>
+          </div>
+          <label class="sort-control">Sort
+            <select id="sortSelect">
+              <option value="featured">Featured</option>
+              <option value="price-low">Price: Low to high</option>
+              <option value="price-high">Price: High to low</option>
+              <option value="rating">Top rated</option>
+            </select>
+          </label>
+        </div>
+        <div class="product-grid" id="productGrid"></div>
+      </section>
+    </div>
+
+    <section class="product-page" id="productView" aria-live="polite" hidden>
+      <button class="back-link" id="backToProducts" type="button">
+        <span aria-hidden="true">←</span> Back to marketplace
+      </button>
+      <div id="productPageContent"></div>
+    </section>
+  </main>
+
+  <div class="backdrop" id="backdrop" hidden></div>
+
+  <aside class="drawer" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
+    <div class="drawer-header">
+      <div><span class="eyebrow">Your basket</span><h2 id="cartTitle">Shopping cart</h2></div>
+      <button class="close-button static" type="button" data-close aria-label="Close cart">×</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <div class="cart-summary">
+        <div><span>Subtotal</span><strong id="cartSubtotal">₹0</strong></div>
+        <div id="cartDiscountRow" hidden><span>Discount</span><strong id="cartDiscount">−₹0</strong></div>
+        <div class="cart-total"><span>Total</span><strong id="cartTotal">₹0</strong></div>
+      </div>
+      <form class="checkout-form" id="checkoutForm">
+        <div class="checkout-policy-note">
+          <strong>Digital purchase policy</strong>
+          <p>No refunds after download. If the file does not work, CrowMint support will help resolve the issue.</p>
+          <p>Support: <a href="mailto:crowmintofficial@gmail.com">crowmintofficial@gmail.com</a> · Instagram: <a href="https://instagram.com/CrowMintofficial" target="_blank" rel="noopener">@CrowMintofficial</a></p>
+        </div>
+        <label class="checkout-terms"><input id="checkoutTerms" name="termsAccepted" type="checkbox" required><span>I have read and agree to the Terms &amp; Conditions, License Terms, and Refund Policy.</span></label>
+        <p class="checkout-error" id="checkoutError" role="alert" hidden></p>
+        <button class="primary-button wide" id="checkoutButton" type="submit" disabled>Get Now</button>
+      </form>
+      <div class="download-success" id="downloadSuccess" role="status" hidden></div>
+    </div>
+  </aside>
+
+  <section class="modal login-modal" id="adminLoginModal" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle" hidden>
+    <button class="close-button" type="button" data-close aria-label="Close admin login">×</button>
+    <span class="eyebrow">Restricted area</span>
+    <h2 id="adminLoginTitle">Admin sign in</h2>
+    <p class="modal-subtitle">Enter your administrator credentials to continue.</p>
+    <form id="adminLoginForm" class="login-form">
+      <label>Email<input name="email" type="email" autocomplete="username" required placeholder="admin@example.com"></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required placeholder="Enter your password"></label>
+      <p class="form-error" id="adminLoginError" role="alert" hidden></p>
+      <button class="primary-button wide" id="adminLoginSubmit" type="submit">Sign in securely</button>
+    </form>
+    <p class="login-security-note">Admin access is stored only for this browser session.</p>
+  </section>
+
+  <section class="modal admin-modal" id="adminModal" role="dialog" aria-modal="true" aria-labelledby="adminTitle" hidden>
+    <button class="close-button" type="button" data-close aria-label="Close admin panel">×</button>
+    <div id="adminProtectedContent"></div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <footer class="site-footer">
+    <div class="footer-top">
+      <a class="brand footer-brand" href="#" aria-label="CrowMint home"><span class="brand-icon"><img src="assets/crowmint-icon.png" alt=""></span><span>CrowMint</span></a>
+      <nav aria-label="Policies"><a href="#contact">Contact</a><a href="#terms">Terms and Conditions</a><a href="#refund-policy">Refund Policy</a><a href="#privacy">Privacy Policy</a></nav>
+    </div>
+    <div class="policy-grid" id="footerPolicies">
+      <section id="contact"><h2><button class="footer-accordion-toggle" type="button" aria-expanded="false" aria-controls="contactContent">Contact <span aria-hidden="true">⌄</span></button></h2><div class="footer-policy-content" id="contactContent"><p>Email <a href="mailto:crowmintofficial@gmail.com">crowmintofficial@gmail.com</a> or Instagram <a href="https://instagram.com/CrowMintofficial" target="_blank" rel="noopener">@CrowMintofficial</a>. Response time: 24–48 hours.</p></div></section>
+      <section id="terms"><h2><button class="footer-accordion-toggle" type="button" aria-expanded="false" aria-controls="termsContent">Terms &amp; Conditions <span aria-hidden="true">⌄</span></button></h2><div class="footer-policy-content" id="termsContent"><p>Digital products are licensed, not resold. Buyers must choose the correct license and may not redistribute purchased files.</p></div></section>
+      <section id="refund-policy"><h2><button class="footer-accordion-toggle" type="button" aria-expanded="false" aria-controls="refundContent">Refund Policy <span aria-hidden="true">⌄</span></button></h2><div class="footer-policy-content" id="refundContent"><p>No refunds after download. If the file does not work, CrowMint support will help resolve the issue.</p></div></section>
+      <section id="privacy"><h2><button class="footer-accordion-toggle" type="button" aria-expanded="false" aria-controls="privacyContent">Privacy Policy <span aria-hidden="true">⌄</span></button></h2><div class="footer-policy-content" id="privacyContent"><p>We use order and contact information only to deliver purchases, provide support, and operate CrowMint securely.</p></div></section>
+    </div>
+    <p class="footer-bottom">© CrowMint. Digital products, ready to download.</p>
+  </footer>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="account.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
