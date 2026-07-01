@@ -29,6 +29,8 @@ function loadCart() {
 const products = [];
 const categories = [];
 const discounts = [];
+const productReviews = new Map();
+let reviewsUnavailableMessage = "";
 const state = { category: "All", search: "", sort: "featured", cart: loadCart(), productDiscounts: {} };
 
 function saveStore() {
@@ -130,6 +132,173 @@ function canClaimWithoutPayment(product) {
 function freeFirstBadge(product) {
   return product.freeForFirstEnabled && product.freeForFirstLimit > 0
     ? `<span class="offer-badge">Free for first ${escapeHtml(product.freeForFirstLimit)} customers</span>` : "";
+}
+
+
+
+async function loadProductReviews(client) {
+  productReviews.clear();
+  reviewsUnavailableMessage = "";
+  const { data, error } = await client
+    .from("product_reviews")
+    .select("id,product_id,user_id,rating,comment,display_name,created_at,updated_at")
+    .order("created_at", { ascending: false });
+  if (error) {
+    reviewsUnavailableMessage = error.message?.includes("product_reviews")
+      ? "Reviews are not configured yet. Run product-reviews-database.sql in Supabase."
+      : error.message || "Reviews could not be loaded.";
+    return;
+  }
+  (data || []).forEach(review => {
+    const key = String(review.product_id);
+    if (!productReviews.has(key)) productReviews.set(key, []);
+    productReviews.get(key).push(review);
+  });
+}
+
+function syncProductReviewStats() {
+  products.forEach(product => {
+    const reviews = productReviews.get(String(product.id)) || [];
+    product.reviews = reviews.length;
+    product.rating = reviews.length
+      ? Number((reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length).toFixed(1))
+      : null;
+  });
+}
+
+function reviewDate(value) {
+  return value ? new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "";
+}
+
+function starOptions(selected = 5) {
+  return [1, 2, 3, 4, 5].map(value => `
+    <label><input type="radio" name="rating" value="${value}" ${Number(selected) === value ? "checked" : ""}><span>${value} star${value === 1 ? "" : "s"}</span></label>
+  `).join("");
+}
+
+function renderReviewsSection(product) {
+  const reviews = productReviews.get(String(product.id)) || [];
+  const average = product.rating ? Number(product.rating).toFixed(1).replace(/\.0$/, "") : "New";
+  const reviewCards = reviews.length ? reviews.map(review => `
+    <article class="review-card">
+      <div class="review-card-header">
+        <strong>${escapeHtml(review.display_name || "CrowMint customer")}</strong>
+        <span class="rating" aria-label="${escapeHtml(review.rating)} out of 5 stars">★ ${escapeHtml(review.rating)}</span>
+      </div>
+      <p>${escapeHtml(review.comment)}</p>
+      <time datetime="${escapeHtml(review.created_at || "")}">${escapeHtml(reviewDate(review.created_at))}</time>
+    </article>
+  `).join("") : `<div class="review-empty">No reviews yet. Purchased customers can be the first to review this product.</div>`;
+
+  return `
+    <section class="detail-section review-detail-section" id="productReviews">
+      <h2>Customer reviews</h2>
+      <div class="reviews-panel" data-reviews-product="${escapeHtml(product.id)}">
+        <div class="review-summary">
+          <strong>${escapeHtml(average)}</strong>
+          <span>★ average rating</span>
+          <small>${reviews.length} ${reviews.length === 1 ? "review" : "reviews"}</small>
+        </div>
+        <div class="review-list">${reviewCards}</div>
+        <div class="review-gate" id="reviewGate">
+          <p>Checking review eligibility...</p>
+        </div>
+        <form class="review-form" id="reviewForm" data-review-form="${escapeHtml(product.id)}" hidden>
+          <h3>Leave a review</h3>
+          <fieldset class="review-stars" aria-label="Rating">${starOptions()}</fieldset>
+          <label>Comment<textarea name="comment" rows="4" maxlength="1000" required placeholder="Share what other creators should know about this product."></textarea></label>
+          <p class="review-message" id="reviewMessage" role="status" hidden></p>
+          <button class="primary-button" type="submit">Submit review</button>
+        </form>
+      </div>
+    </section>
+  `;
+}
+
+async function hydrateReviewEligibility(product) {
+  const gate = el("reviewGate");
+  const form = el("reviewForm");
+  if (!gate || !form || !product) return;
+  if (reviewsUnavailableMessage) {
+    gate.innerHTML = `<p>${escapeHtml(reviewsUnavailableMessage)}</p>`;
+    return;
+  }
+  const currentUser = await window.CrowMintAccount.user().catch(() => null);
+  if (!currentUser) {
+    gate.innerHTML = `<p>Log in with the account used to purchase this product to leave a review.</p><a class="secondary-button" href="/login/?next=${encodeURIComponent(location.pathname + location.search + location.hash)}">Log in to review</a>`;
+    return;
+  }
+  const client = await getSupabaseClient();
+  const { data: purchase, error } = await client
+    .from("purchases")
+    .select("id")
+    .eq("user_id", currentUser.id)
+    .eq("product_id", String(product.id))
+    .maybeSingle();
+  if (error) {
+    gate.innerHTML = `<p>Unable to verify purchase: ${escapeHtml(error.message)}</p>`;
+    return;
+  }
+  if (!purchase) {
+    gate.innerHTML = "<p>Only customers who own, claimed, or purchased this product can leave a review.</p>";
+    return;
+  }
+
+  const existingReview = (productReviews.get(String(product.id)) || []).find(review => review.user_id === currentUser.id);
+  form.hidden = false;
+  gate.innerHTML = existingReview ? "<p>You already reviewed this product. You can update your review below.</p>" : "<p>You own this product. Share your review below.</p>";
+  if (existingReview) {
+    const rating = form.querySelector(`input[name="rating"][value="${existingReview.rating}"]`);
+    if (rating) rating.checked = true;
+    form.elements.comment.value = existingReview.comment || "";
+    form.querySelector('[type="submit"]').textContent = "Update review";
+  }
+}
+
+async function submitProductReview(productId, form) {
+  const message = el("reviewMessage");
+  const submitButton = form.querySelector('[type="submit"]');
+  message.hidden = true;
+  const currentUser = await window.CrowMintAccount.requireUser();
+  if (!currentUser) return;
+  const client = await getSupabaseClient();
+  const rating = Number(new FormData(form).get("rating"));
+  const comment = String(new FormData(form).get("comment") || "").trim();
+  if (!rating || rating < 1 || rating > 5 || !comment) {
+    message.className = "review-message error";
+    message.textContent = "Choose a rating and write a review comment.";
+    message.hidden = false;
+    return;
+  }
+  submitButton.disabled = true;
+  submitButton.textContent = "Saving...";
+  const displayName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email?.split("@")[0] || "CrowMint customer";
+  const { error } = await client
+    .from("product_reviews")
+    .upsert({
+      product_id: String(productId),
+      user_id: currentUser.id,
+      rating,
+      comment,
+      display_name: displayName,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "product_id,user_id" });
+  if (error) {
+    message.className = "review-message error";
+    message.textContent = error.message;
+    message.hidden = false;
+    submitButton.disabled = false;
+    submitButton.textContent = "Submit review";
+    return;
+  }
+  await loadProductReviews(client);
+  syncProductReviewStats();
+  const product = products.find(item => String(item.id) === String(productId));
+  if (product) {
+    renderProductPage(product);
+    setTimeout(() => document.getElementById("productReviews")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }
+  showToast("Review saved.");
 }
 
 async function initializeMarketplaceData() {
@@ -333,7 +502,9 @@ function renderProductPage(product) {
         <h2>Frequently asked questions</h2>
         <div class="faq-accordion">${faqMarkup}</div>
       </section>` : ""}
+      ${renderReviewsSection(product)}
     </div>`;
+  hydrateReviewEligibility(product);
 }
 
 function isAdminRoute() {
@@ -814,6 +985,11 @@ el("productPageContent").addEventListener("click", async event => {
 });
 
 el("productPageContent").addEventListener("submit", async event => {
+  if (event.target.matches("[data-review-form]")) {
+    event.preventDefault();
+    await submitProductReview(event.target.dataset.reviewForm, event.target);
+    return;
+  }
   if (event.target.id !== "productDiscountForm") return;
   event.preventDefault();
   const message = el("productDiscountMessage");
