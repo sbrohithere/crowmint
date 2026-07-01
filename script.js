@@ -202,11 +202,15 @@ function renderProducts() {
     return;
   }
 
-  productGrid.innerHTML = matches.map(product => `
+  productGrid.innerHTML = matches.map((product, index) => `
     <article class="product-card">
       <a class="product-image-wrap product-image-link" href="#product/${encodeURIComponent(product.id)}" aria-label="View ${escapeHtml(product.name)} details">
         <img class="product-image" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy">
-        <span class="download-badge">DIGITAL DOWNLOAD</span>
+        <div class="product-badges" aria-label="Product highlights">
+          <span class="download-badge">Featured</span>
+          ${index < 4 ? '<span class="download-badge new-badge">New</span>' : ""}
+          ${canClaimWithoutPayment(product) ? '<span class="download-badge free-badge">Free</span>' : ""}
+        </div>
       </a>
       <div class="product-body">
         <span class="product-category">${escapeHtml(product.category)}</span>
@@ -258,7 +262,7 @@ function renderProductPage(product) {
           <button class="gallery-thumb ${index === 0 ? "active" : ""}" type="button" data-gallery-image="${escapeHtml(image)}" aria-label="Show preview ${index + 1}"><img src="${escapeHtml(image)}" alt=""></button>
         `).join("")}</div>` : ""}
       </div>
-      <div class="product-detail-info">
+      <aside class="product-detail-info" aria-label="Purchase options">
         <span class="eyebrow">${escapeHtml(product.category)} · Digital product</span>
         ${freeFirstBadge(product)}
         <h1>${escapeHtml(product.name)}</h1>
@@ -285,7 +289,7 @@ function renderProductPage(product) {
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
           <span><strong>Instant digital download</strong><br>No physical item will be shipped. Your files are available after ${isFree ? "checkout" : "payment"}.</span>
         </div>
-      </div>
+      </aside>
     </div>
 
     <div class="detail-sections">
@@ -527,7 +531,18 @@ async function resumePendingCartCheckout() {
 
 function renderCart() {
   el("cartItems").innerHTML = state.cart.length ? state.cart.map(item => `
-    <div class="cart-item" data-cart-product="${escapeHtml(item.id)}" tabindex="0" role="link" aria-label="View ${escapeHtml(item.name)} details"><img src="${escapeHtml(item.image)}" alt=""><div><h3>${escapeHtml(item.name)}</h3><span class="cart-item-license">${item.selectedLicense === "commercial" ? "Commercial" : "Personal"} License</span><span class="cart-item-price">${money(item.price)}</span>${item.discountAmount ? `<span class="item-discount">${escapeHtml(item.discountCode)} −${money(item.discountAmount)}</span>` : ""}</div><button class="remove-button" type="button" data-remove="${escapeHtml(item.cartKey)}" aria-label="Remove ${escapeHtml(item.name)}">Remove</button></div>
+    <div class="cart-item" data-cart-product="${escapeHtml(item.id)}" tabindex="0" role="link" aria-label="View ${escapeHtml(item.name)} details">
+      <img src="${escapeHtml(item.image)}" alt="">
+      <div class="cart-item-copy">
+        <h3>${escapeHtml(item.name)}</h3>
+        <span class="cart-item-license">${item.selectedLicense === "commercial" ? "Commercial" : "Personal"} License</span>
+        ${item.discountAmount ? `<span class="item-discount">${escapeHtml(item.discountCode)} -${money(item.discountAmount)}</span>` : ""}
+      </div>
+      <div class="cart-item-side">
+        <strong class="cart-item-price">${money(item.price)}</strong>
+        <button class="remove-button" type="button" data-remove="${escapeHtml(item.cartKey)}" aria-label="Remove ${escapeHtml(item.name)}">Remove</button>
+      </div>
+    </div>
   `).join("") : `<div class="cart-empty"><strong>Your cart is empty.</strong><br>Add a product to see it here.</div>`;
 
   const subtotal = state.cart.reduce((sum, item) => sum + item.price, 0);

@@ -304,7 +304,12 @@
     if (!data?.length) { list.innerHTML = '<div class="account-empty">No purchases yet.</div>'; return; }
     list.innerHTML = data.map(item => `<article class="purchase-card">
       <img src="${escapeHtml(item.product_image || "../assets/crowmint-icon.png")}" alt="">
-      <div><h2>${escapeHtml(item.product_name)}</h2><div class="account-meta">${escapeHtml(formatDate(item.claimed_at))}</div><span class="status-pill">${escapeHtml(item.purchase_type === "paid" ? "Owned" : "Free claim")}</span></div>
+      <div>
+        <span class="library-label">${escapeHtml(item.purchase_type === "paid" ? "Owned license" : "Free license")}</span>
+        <h2>${escapeHtml(item.product_name)}</h2>
+        <div class="account-meta"><span>License</span><strong>${escapeHtml(item.purchase_type === "paid" ? "Digital product" : "Free claim")}</strong></div>
+        <div class="account-meta"><span>Purchase date</span><strong>${escapeHtml(formatDate(item.claimed_at))}</strong></div>
+      </div>
       <button class="primary-button" type="button" data-download-purchase="${escapeHtml(item.id)}">Download</button>
     </article>`).join("");
     list.addEventListener("click", async event => {
@@ -321,7 +326,17 @@
     const list = document.getElementById("orderList");
     if (error) { list.innerHTML = `<div class="account-empty">${escapeHtml(error.message)}</div>`; return; }
     if (!data?.length) { list.innerHTML = '<div class="account-empty">No order history yet.</div>'; return; }
-    list.innerHTML = data.map(item => `<article class="order-card"><div></div><div><h2>${escapeHtml(item.product_name)}</h2><div class="account-meta">${escapeHtml(item.order_id || "No payment ID")} · ₹${Number(item.amount_paid || 0).toLocaleString("en-IN")} · ${escapeHtml(formatDate(item.purchase_date))}</div><span class="status-pill ${item.payment_status === "failed" ? "failed" : item.payment_status === "pending" ? "pending" : ""}">${escapeHtml(item.payment_status === "free_claim" ? "Free Claim" : item.payment_status)}</span></div>${item.payment_status === "failed" ? '<a class="primary-button" href="/">Try Again</a>' : ''}</article>`).join("");
+    list.innerHTML = `<div class="orders-table-wrap"><table class="orders-table">
+      <thead><tr><th>Order ID</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th><th></th></tr></thead>
+      <tbody>${data.map(item => `<tr>
+        <td class="order-id">${escapeHtml(item.order_id || "No payment ID")}</td>
+        <td><strong>${escapeHtml(item.product_name)}</strong></td>
+        <td><strong>Rs ${Number(item.amount_paid || 0).toLocaleString("en-IN")}</strong></td>
+        <td><span class="status-pill ${item.payment_status === "failed" ? "failed" : item.payment_status === "pending" ? "pending" : ""}">${escapeHtml(item.payment_status === "free_claim" ? "Free Claim" : item.payment_status)}</span></td>
+        <td>${escapeHtml(formatDate(item.purchase_date))}</td>
+        <td>${item.payment_status === "failed" ? '<a class="primary-button" href="/">Try Again</a>' : ''}</td>
+      </tr>`).join("")}</tbody>
+    </table></div>`;
   }
 
   async function initHeader() {
